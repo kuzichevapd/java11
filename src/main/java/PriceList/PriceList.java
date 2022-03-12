@@ -1,3 +1,5 @@
+package PriceList;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -5,53 +7,47 @@ import java.util.Objects;
 
 
 public class PriceList {
-    private Map<Integer, Product> productMap = new HashMap<>();
+    private final Map<Integer, Product> productMap = new HashMap<>();
 
     public void addProduct(Integer id, String name, String price) {
-        if (productMap.containsKey(id)) throw new IllegalArgumentException("Продукт с таким номером уже есть в списке");
-        Product tryprice = new Product(name, price);
-        if (!(tryprice.price == 0.0)) productMap.put(id, new Product(name, price));
-        else throw new IllegalArgumentException("Неверный формат ввода");
+        productMap.put(id, new Product(name, price));
     }
 
     public boolean containsProduct(Integer id) {
         return productMap.containsKey(id);
     }
 
-    public String getProductPricebyId(Integer id) {
+    public Double getProductPriceById(Integer id) {
         if (!productMap.containsKey(id)) throw new NoSuchElementException();
-        if (productMap.get(id).getPrice() == null) throw new IllegalStateException("Цена "
-                + productMap.get(id).getName() + " не указана");
         return productMap.get(id).getPrice();
     }
 
-    public String getProductNamebyId(Integer id){
+    public String getProductNameById(Integer id) {
         if (!productMap.containsKey(id)) throw new NoSuchElementException();
-        if (productMap.get(id).getName() == null) throw new IllegalStateException("Имя не указано");
         return productMap.get(id).getName();
     }
 
-    public String getProduct(Integer id) {
+    public Product getProduct(Integer id) {
         if (!productMap.containsKey(id)) throw new NoSuchElementException();
-        return productMap.get(id).toString();
+        return productMap.get(id);
     }
 
-    public Integer getProductIdbyName(String name) {
+    public Integer getProductIdByName(String name) {
         Integer id = 0;
         for (Map.Entry<Integer, Product> entry : productMap.entrySet()) {
             Product prod = entry.getValue();
-            if (prod.name.equals(name)) {
+            if (prod.name.equals(name) && name != null && prod.name != null) {
                 id = entry.getKey();
+                break;
             }
         }
-        if (id.equals(0)) {
-            throw new NoSuchElementException();
-        } else return id;
+        if (id.equals(0)) throw new NoSuchElementException();
+        else return id;
 
     }
 
-    public String getProductPricebyName(String name) {
-        return getProductPricebyId(getProductIdbyName(name));
+    public Double getProductPriceByName(String name) {
+        return getProductPriceById(getProductIdByName(name));
     }
 
     public void setProductName(Integer id, String name) {
@@ -59,9 +55,14 @@ public class PriceList {
         (productMap.get(id)).setName(name);
     }
 
-    public void setProductPrice(Integer id, String price) {
+    public void setProductPriceStr(Integer id, String price) {
         if (!productMap.containsKey(id)) throw new NoSuchElementException();
-        (productMap.get(id)).setPrice(price);
+        (productMap.get(id)).setPriceStr(price);
+    }
+
+    public void setProductPriceDo(Integer id, Double price) {
+        if (!productMap.containsKey(id)) throw new NoSuchElementException();
+        (productMap.get(id)).setPriceDo(price);
     }
 
     public void removeProduct(Integer id) {
@@ -69,11 +70,11 @@ public class PriceList {
         productMap.remove(id);
     }
 
-    public String purchaseCost(Integer id, Integer amount) {
+    public Double purchaseCost(Integer id, Integer amount) {
         if (!productMap.containsKey(id)) throw new NoSuchElementException();
-        Double cost = Double.parseDouble(getProductPricebyId(id));
-        Double totalAmount = amount * cost;
-        return totalAmount.toString();
+        if (amount < 0) throw new IllegalArgumentException();
+        Double cost = getProductPriceById(id);
+        return amount * cost;
     }
 
 
@@ -90,57 +91,71 @@ public class PriceList {
         return Objects.hash(productMap);
     }
 
-    private static class Product {
+    @Override
+    public String toString() {
+        return productMap.toString();
+    }
+
+    public static class Product {
         private String name;
         private Double price;
 
-        Product(String name, String price) {
+        public Product(String name, String price) {
             this.name = name;
             this.price = convert(price);
         }
 
+        public Product(String name, Double price) {
+            this.name = name;
+            this.price = convert(price.toString());
+        }
+
         private Double convert(String price) {
             if (price.contains("-")) throw new IllegalArgumentException();
+            String regex = "[0-9]+";
             String[] prices = price.split("\\.");
             if (prices.length == 2) {
-                if (prices[1].length() > 2) {
-                    throw new IllegalArgumentException("Копеечная составляющая цены не может содержать более двух символов");
-                }
+                if (!prices[0].matches(regex) || !prices[1].matches(regex))
+                    throw new IllegalArgumentException("Неверный формат ввода");
+                    if (prices[1].length() > 2) {
+                        throw new IllegalArgumentException("Копеечная составляющая цены не может содержать более двух символов");
+                    }
             } else if (prices.length > 2) throw new IllegalArgumentException("Неверный формат ввода");
             try {
-                double v = Double.parseDouble(price);
-                return v;
+                return Double.parseDouble(price);
             } catch (NumberFormatException e) {
-                return 0.0;
+                throw new IllegalArgumentException("Неверный формат ввода");
             }
         }
 
         private String getName() {
+            if (this.name == null) throw new IllegalStateException("Имя не указано");
             return this.name;
         }
 
-        private String getPrice() {
-            String[] prices = this.price.toString().split("\\.");
-            String priceconv = this.price.toString();
-            if (prices.length < 2) priceconv += ".00";
-            if (prices[1].length() == 1) priceconv += "0";
-            return priceconv;
+        private Double getPrice() {
+            if (this.price == null) throw new IllegalStateException("Цена не указана");
+            return this.price;
         }
 
         private void setName(String name) {
             this.name = name;
         }
 
-        private void setPrice(String price) {
+        private void setPriceStr(String price) {
             this.price = convert(price);
+        }
+
+        private void setPriceDo(Double price) {
+            this.price = convert(price.toString());
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o instanceof Product) {
-                if (this.name.equals(((Product) o).name) &&
-                        this.price.equals(((Product) o).price)) return true;
+                return this.name.equals(((Product) o).name) &&
+                        this.price.equals(((Product) o).price);
             }
             return false;
         }
