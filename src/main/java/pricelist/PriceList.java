@@ -1,4 +1,4 @@
-package PriceList;
+package pricelist;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,8 +9,18 @@ import java.util.Objects;
 public class PriceList {
     private final Map<Integer, Product> productMap = new HashMap<>();
 
-    public void addProduct(Integer id, String name, String price) {
-        productMap.put(id, new Product(name, price));
+    public boolean addProductWithStringPrice(Integer id, String name, String price) {
+        if (!productMap.containsKey(id)) {
+            productMap.put(id, new Product(name, price));
+            return true;
+        } else return false;
+    }
+
+    public boolean addProductWithDoublePrice(Integer id, String name, Double price) {
+        if (!productMap.containsKey(id)) {
+            productMap.put(id, new Product(name, price));
+            return true;
+        } else return false;
     }
 
     public boolean containsProduct(Integer id) {
@@ -36,7 +46,7 @@ public class PriceList {
         Integer id = 0;
         for (Map.Entry<Integer, Product> entry : productMap.entrySet()) {
             Product prod = entry.getValue();
-            if (prod.name.equals(name) && name != null && prod.name != null) {
+            if (prod.name != null && !name.isEmpty() && prod.name.equals(name)) {
                 id = entry.getKey();
                 break;
             }
@@ -50,24 +60,32 @@ public class PriceList {
         return getProductPriceById(getProductIdByName(name));
     }
 
-    public void setProductName(Integer id, String name) {
-        if (!productMap.containsKey(id)) throw new NoSuchElementException();
-        (productMap.get(id)).setName(name);
+    public boolean setProductName(Integer id, String name) {
+        if (productMap.containsKey(id)) {
+            return (productMap.get(id)).setName(name);
+        }
+        return false;
     }
 
-    public void setProductPriceStr(Integer id, String price) {
-        if (!productMap.containsKey(id)) throw new NoSuchElementException();
-        (productMap.get(id)).setPriceStr(price);
+    public boolean setProductStringPrice(Integer id, String price) {
+        if (productMap.containsKey(id)) {
+            return (productMap.get(id)).setStringPrice(price);
+        }
+        return false;
     }
 
-    public void setProductPriceDo(Integer id, Double price) {
-        if (!productMap.containsKey(id)) throw new NoSuchElementException();
-        (productMap.get(id)).setPriceDo(price);
+    public boolean setProductDoublePrice(Integer id, Double price) {
+        if (productMap.containsKey(id)) {
+            return (productMap.get(id)).setDoublePrice(price);
+        }
+        return false;
     }
 
-    public void removeProduct(Integer id) {
-        if (!productMap.containsKey(id)) throw new NoSuchElementException();
-        productMap.remove(id);
+    public boolean removeProduct(Integer id) {
+        if (productMap.containsKey(id)) {
+            productMap.remove(id);
+            return true;
+        } else return false;
     }
 
     public Double purchaseCost(Integer id, Integer amount) {
@@ -107,25 +125,20 @@ public class PriceList {
 
         public Product(String name, Double price) {
             this.name = name;
-            this.price = convert(price.toString());
+            if (check(price)) this.price = price;
+            else throw
+                    new IllegalArgumentException("Копеечная составляющая цены не может превышать два знака после запятой");
         }
 
         private Double convert(String price) {
-            if (price.contains("-")) throw new IllegalArgumentException();
-            String regex = "[0-9]+";
-            String[] prices = price.split("\\.");
-            if (prices.length == 2) {
-                if (!prices[0].matches(regex) || !prices[1].matches(regex))
-                    throw new IllegalArgumentException("Неверный формат ввода");
-                    if (prices[1].length() > 2) {
-                        throw new IllegalArgumentException("Копеечная составляющая цены не может содержать более двух символов");
-                    }
-            } else if (prices.length > 2) throw new IllegalArgumentException("Неверный формат ввода");
-            try {
-                return Double.parseDouble(price);
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Неверный формат ввода");
-            }
+            if (!price.matches("[0-9]+[.][0-9]{2}$")) return 0.0;
+            else return Double.parseDouble(price);
+        }
+
+        private boolean check(Double price) {
+            if (price == null) return false;
+            String[] splitter = String.valueOf(price).split("\\.");
+            return (splitter[1].length() == 2);
         }
 
         private String getName() {
@@ -138,16 +151,25 @@ public class PriceList {
             return this.price;
         }
 
-        private void setName(String name) {
-            this.name = name;
+        private boolean setName(String name) {
+            if (name != null && !name.isEmpty()) {
+                this.name = name;
+                return true;
+            } else return false;
         }
 
-        private void setPriceStr(String price) {
-            this.price = convert(price);
+        private boolean setStringPrice(String price) {
+            if (convert(price) != 0.0) {
+                this.price = convert(price);
+                return true;
+            } else return false;
         }
 
-        private void setPriceDo(Double price) {
-            this.price = convert(price.toString());
+        private boolean setDoublePrice(Double price) {
+            if (check(price)) {
+                this.price = price;
+                return true;
+            } else return false;
         }
 
         @Override
@@ -167,7 +189,7 @@ public class PriceList {
 
         @Override
         public String toString() {
-            if (price == null) return name + " " + "цена не указана";
+            if (price == null || name.isEmpty()) throw new IllegalStateException();
             return name + " " + price;
         }
     }

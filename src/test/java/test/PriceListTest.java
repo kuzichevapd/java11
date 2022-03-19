@@ -1,10 +1,10 @@
-package PriceListTest;
+package test;
+
 
 import org.junit.Before;
 import org.junit.Test;
-import PriceList.PriceList;
+import pricelist.PriceList;
 
-import java.util.NoSuchElementException;
 
 import static org.junit.Assert.*;
 
@@ -46,31 +46,25 @@ public class PriceListTest {
 
     @Before
     public void setUp() {
-        priceList.addProduct(id1, prName1, price1);
-        priceList.addProduct(id2, prName2, price2);
-        priceList.addProduct(id3, prName3, price3);
-        priceList.addProduct(id4, prName4, price4);
+        priceList.addProductWithStringPrice(id1, prName1, price1);
+        priceList.addProductWithStringPrice(id2, prName2, price2);
+        priceList.addProductWithStringPrice(id3, prName3, price3);
+        priceList.addProductWithStringPrice(id4, prName4, price4);
 
     }
 
     @Test
-    public void addProduct() {
-        try {
-            priceList.addProduct(id5, prName5, "7777-9");
-        } catch (IllegalArgumentException e) {
-        }
-        try {
-            priceList.addProduct(id5, prName5, "7777.8976");
-        } catch (IllegalArgumentException e) {
-        }
-        try {
-            priceList.addProduct(id4, prName5, "7777.89");
-        } catch (IllegalArgumentException e) {
-        }
-        try {
-            priceList.addProduct(id5, prName5, "777pp.89");
-        } catch (IllegalArgumentException e) {
-        }
+    public void addProductWithStringPrice() {
+        assertTrue(priceList.addProductWithStringPrice(id5, prName5, price1));
+        assertFalse(priceList.addProductWithStringPrice(id1, prName5, price1));
+
+    }
+
+    @Test
+    public void addProductWithDoublePrice() {
+        assertTrue(priceList.addProductWithDoublePrice(id5, prName5, price1d));
+        assertFalse(priceList.addProductWithDoublePrice(id1, prName5, price1d));
+
     }
 
     @Test
@@ -84,10 +78,6 @@ public class PriceListTest {
         assertEquals(price2d, priceList.getProductPriceById(id2));
         assertEquals(price3d, priceList.getProductPriceById(id3));
         assertEquals(price4d, priceList.getProductPriceById(id4));
-        try {
-            priceList.getProductPriceById(34);
-        } catch (NoSuchElementException e) {
-        }
     }
 
     @Test
@@ -96,10 +86,7 @@ public class PriceListTest {
         assertEquals(prName2, priceList.getProductNameById(id2));
         assertEquals(prName3, priceList.getProductNameById(id3));
         assertEquals(prName4, priceList.getProductNameById(id4));
-        try {
-            priceList.getProductNameById(34);
-        } catch (NoSuchElementException e) {
-        }
+
     }
 
     @Test
@@ -108,10 +95,6 @@ public class PriceListTest {
         assertEquals(new PriceList.Product(prName2, price2), priceList.getProduct(id2));
         assertEquals(new PriceList.Product(prName3, price3), priceList.getProduct(id3));
         assertEquals(new PriceList.Product(prName4, price4), priceList.getProduct(id4));
-        try {
-            priceList.getProduct(id5);
-        } catch (NoSuchElementException e) {
-        }
     }
 
     @Test
@@ -119,10 +102,7 @@ public class PriceListTest {
         assertEquals(id1, priceList.getProductIdByName(prName1));
         assertEquals(id2, priceList.getProductIdByName(prName2));
         assertEquals(id3, priceList.getProductIdByName(prName3));
-        try {
-            priceList.getProductIdByName(prName5);
-        } catch (NoSuchElementException e) {
-        }
+
     }
 
     @Test
@@ -135,40 +115,31 @@ public class PriceListTest {
 
     @Test
     public void setProductName() {
-        priceList.setProductName(id1, prName5);
-        assertEquals(prName5, priceList.getProductNameById(id1));
-        try {
-            priceList.setProductName(id5, prName5);
-        } catch (NoSuchElementException e) {
-        }
+        assertTrue(priceList.setProductName(id4, prName5));
+        assertFalse(priceList.setProductName(id5, prName5));
+        assertFalse(priceList.setProductName(id4, null));
+
     }
 
     @Test
-    public void setProductPriceStr() {
-        priceList.setProductPriceStr(id1, price3);
-        assertEquals(price3d, priceList.getProductPriceById(id1));
-        try {
-            priceList.setProductPriceStr(id5, price3);
-        } catch (NoSuchElementException e) {
-        }
+    public void setProductStringPrice() {
+        assertTrue((priceList.setProductStringPrice(id2, price1)));
+        assertFalse((priceList.setProductStringPrice(id2, "333/00")));
+        assertFalse((priceList.setProductStringPrice(id2, "333.99999")));
+        assertFalse((priceList.setProductStringPrice(id5, "55.01")));
     }
 
     @Test
-    public void setProductPriceDo() {
-        priceList.setProductPriceDo(id1, price3d);
-        assertEquals(price3d, priceList.getProductPriceById(id1));
-        try {
-            priceList.setProductPriceDo(id5, price3d);
-        } catch (NoSuchElementException e) {
-        }
+    public void setProductDoublePrice() {
+        assertTrue((priceList.setProductDoublePrice(id2, price1d)));
+        assertFalse((priceList.setProductDoublePrice(id2, 33.0111)));
+        assertFalse((priceList.setProductDoublePrice(id5, 22.22)));
     }
 
     @Test
     public void removeProduct() {
-        priceList.removeProduct(id1);
-        assertFalse(priceList.containsProduct(id1));
-        priceList.removeProduct(id2);
-        assertFalse(priceList.containsProduct(id2));
+        assertTrue(priceList.removeProduct(id1));
+        assertFalse(priceList.removeProduct(id5));
     }
 
     @Test
@@ -177,10 +148,6 @@ public class PriceListTest {
         assertEquals(cost2, priceList.purchaseCost(id2, amount2));
         assertEquals(cost3, priceList.purchaseCost(id3, amount3));
         assertEquals(cost4, priceList.purchaseCost(id4, amount4));
-        try {
-            priceList.purchaseCost(id5, amount1);
-        } catch (NoSuchElementException e) {
-        }
     }
 
 
